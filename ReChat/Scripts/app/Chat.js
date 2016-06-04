@@ -8,7 +8,6 @@ tokenKey = "tokenInfo";
 isAuth = false;
 MyLogin = LoginString = '';
 arrErr = []; //массив ошибок с id
-Wait = false;
 
 frmR = document.getElementById("frmReg");
 frmL = document.getElementById("frmLogin");
@@ -87,8 +86,6 @@ function GetMessages() {
         LastMessageID: LastMessageID,
         token: sessionStorage.getItem(tokenKey)
     };
-    if (Wait) return;
-    Wait = true;
     $.ajax({
         url: ChatUrl,
         type: 'POST',
@@ -104,10 +101,9 @@ function GetMessages() {
             AddElements(messages);
             if (messages.length > 0)
                 ChatForm.scrollTop = 99999;
-            Wait = false;
         },
         error: function (jqxhr, status, errorMsg) {
-            Wait = false;
+
         }
     });
 }
@@ -142,8 +138,7 @@ function ChatViewModel() {
                 LastMessageID: LastMessageID,
             };
 
-            if (Wait) return;
-            Wait = true;
+
             $.ajax({
                 url: ChatUrl,
                 type: 'PUT',
@@ -153,17 +148,16 @@ function ChatViewModel() {
                     var messages = $.map(data, function (msg) {
                         var m = new MsgServer(msg);
                         m.dt = FormatDate(m.dt);
-                        LastMessageID = msg.id;
+                        if(LastMessageID<msg.id) LastMessageID = msg.id;
                         return m;
                     });
                     AddElements(messages);
                     ChatForm.scrollTop = 99999;
-                    Wait = false;
                     $("#myMessage").val('');
                 },
                 error: function (jqxhr, status, errorMsg) {
-                Wait = false;
-            }
+
+                }
 
             });
 
@@ -175,7 +169,7 @@ function ChatViewModel() {
 /////////////////  Обработка событий  \\\\\\\\\\\\\\\\\
 
 //Обработка нажатия Enter инпута чата
-$("#myMessage").keyup(function (event) {
+$("#myMessage").keydown(function (event) {
     if (event.keyCode == 13) {
         $("#btnSend").click();
     }
@@ -196,8 +190,8 @@ $("#btnRegSend").on('click',  function () {
         arrErr.push(new ResponseError({ 'key': 'pwd', 'text': 'Пароли не совпадают!' }));
     }
 
-    if ($('#pwd').val().length < 5) {
-        arrErr.push(new ResponseError({ 'key': 'pwd', 'text': 'Пароль должен быть не менее 5 символов!' }));
+    if ($('#pwd').val().length < 3) {
+        arrErr.push(new ResponseError({ 'key': 'pwd', 'text': 'Пароль должен быть не менее 3 символов!' }));
     }
 
     if ($('#email').val() == '') {
@@ -221,8 +215,7 @@ $("#btnRegSend").on('click',  function () {
         lastname: $('#lastname').val(),
         email: $('#email').val()
     };
-    if (Wait) return;
-    Wait = true;
+
     $.ajax({
         url: RegUrl,
         type: 'POST',
@@ -232,7 +225,6 @@ $("#btnRegSend").on('click',  function () {
             frmR.style.display = "none";
             frmL.style.display = "block";
             frmChat.style.display = "none";
-            Wait = false;
 
             $('#loginreg').val('');
             $('#pwd').val('');
@@ -250,7 +242,6 @@ $("#btnRegSend").on('click',  function () {
             for (i = 0; i < arrErr.length; i++) {
                 SetInputValidError(arrErr[i].key, '  ' + arrErr[i].text, 'input-validation-error', 'field-validation-error');
             }
-            Wait = false;
         }
     });
 });
@@ -279,7 +270,7 @@ $("#btnLogin").on('click', function () {
         arrErr.push(new ResponseError({ 'key': 'login', 'text': 'Укажите логин!' }));
     }
 
-    if ($('#password').val().length < 5) {
+    if ($('#password').val().length == 0) {
         arrErr.push(new ResponseError({ 'key': 'password', 'text': 'Укажите пароль!' }));
     }
 
@@ -294,8 +285,7 @@ $("#btnLogin").on('click', function () {
         password: $('#password').val(),
         cookie: " "
     };
-    if (Wait) return;
-    Wait = true;
+
     $.ajax({
         url: AccountUrl,
         type: 'POST',
@@ -311,7 +301,7 @@ $("#btnLogin").on('click', function () {
             frmL.style.display = "none";
             frmChat.style.display = "block";
             $('#nm').text(LoginString);
-            Wait = false;
+
             GetMessages();
         },
         error: function (jqxhr, status, errorMsg) {
@@ -322,7 +312,6 @@ $("#btnLogin").on('click', function () {
             for (i = 0; i < arrErr.length; i++) {
                 SetInputValidError(arrErr[i].key, '  ' + arrErr[i].text, 'input-validation-error', 'field-validation-error');
             }
-            Wait = false;
         }
 
         
@@ -343,7 +332,7 @@ $("#btnRegCancel").on('click', function () {
     frmChat.style.display = "none";
 });
 
-//Нажата конопка выхода
+//Нажата кнопка выхода
 $("#btnExit").on('click', function () {
     value = {
         Token: sessionStorage.getItem(tokenKey),

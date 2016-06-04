@@ -1,73 +1,64 @@
 ﻿using System.Linq;
 using ReChat.Models;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace ReChat
 {
     public static class DBase
     {
-        private static Entities eLog;
-        private static Log log;
+        private static ChatContext eLog = new ChatContext();
 
-        private static object _sync;
+        private static object _sync = new object();
 
         //Кэшируем пользователей
-        private static ConcurrentDictionary<string, User> users;
+        private static ConcurrentDictionary<string, User> users = new ConcurrentDictionary<string, User>();
+
+        private static List<Log> logs = new List<Log>();
+        private static int logCount = 0;
 
         static DBase()
         {
-            users = new ConcurrentDictionary<string, User>();
-            eLog = new Entities();
-            _sync = new object();
+
         }
+
         /// <summary>
         /// Добавление сообщения чата в очередь на запись в БД
         /// </summary>
         /// <param name="msg"></param>
         public static void AddToLog(Message msg)
         {
-
-            log = new Log();
-            log.idUser = msg.User.Id;
-            log.text = msg.Text;
-            log.DT = msg.DT;
-
             lock (_sync)
             {
-                eLog.Logs.Add(log);
+                logs.Add(new Log
+                {
+                    User = msg.User,
+                    Text = msg.Text,
+                    DT = msg.DT
+                });
+                logCount++;
             }
+
+            if (logCount%100 == 0)
+                lock (_sync)
+                {
+                    eLog.Logs.AddRange(logs);
+                    eLog.SaveChanges();
+                }
         }
 
         /// <summary>
         /// Запись сообщений в базу
         /// </summary>
         /// <returns>true - если запись прошла успешно</returns>
-        public static bool SaveLogsToDB()
-        {
-            try
-            {
-                eLog.SaveChanges();
-            }
-            catch
-            {
-                return false;
-            };
-
-            return true;
-        }
-
         public static bool UserExist(string login)
         {
-            User k;
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 try
                 {
-                    k = entity.Users.First(u => u.Login == login);
-                    if (k != null)
-                        return true;
-                    else
-                        return false;
+                    User k = entity.Users.First(u => u.Login == login);
+                    return k != null;
                 }
                 catch
                 {
@@ -78,16 +69,12 @@ namespace ReChat
 
         public static bool EmailUsed(string email)
         {
-            User k;
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 try
                 {
-                    k = entity.Users.First(u => u.Email == email);
-                    if (k != null)
-                        return true;
-                    else
-                        return false;
+                    User k = entity.Users.First(u => u.Email == email);
+                    return k != null;
                 }
                 catch
                 {
@@ -95,17 +82,14 @@ namespace ReChat
                 };
             }
         }
-
-
+        
         public static User GetUser(string login, string password)
         {
-            User k;
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 try
                 {
-                    k = entity.Users.First(u => u.Login == login && u.Password == password);
-
+                    User k = entity.Users.First(u => u.Login == login && u.Password == password);
                     return k;
                 }
                 catch
@@ -117,12 +101,11 @@ namespace ReChat
 
         public static User GetUserByCookeis(string coockies)
         {
-            User k;
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 try
                 {
-                    k = entity.Users.First(u => u.Cookies == coockies);
+                    User k = entity.Users.First(u => u.Cookies == coockies);
                     return k;
                 }
                 catch
@@ -134,16 +117,14 @@ namespace ReChat
 
         public static User GetUserByToken(string token)
         {
-            User k;
-            using (var entity = new Entities())
+            if (users.ContainsKey(token))
+                return users[token];
+
+            using (var entity = new ChatContext())
             {
-
-                if (users.ContainsKey(token))
-                    return users[token];
-
                 try
                 {
-                    k = entity.Users.First(u => u.Token == token);
+                    User k = entity.Users.First(u => u.Token == token);
 
                     users.TryAdd(token, k);
 
@@ -158,8 +139,7 @@ namespace ReChat
 
         public static bool AddUser(User user)
         {
-
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 try
                 {
@@ -177,11 +157,11 @@ namespace ReChat
         public static bool UpdateUser(User user)
         {
 
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 User k = entity.Users.First(u => u.Id == user.Id);
                 k.Email = user.Email;
-                k.idRole = user.idRole;
+                k.Role = user.Role;
                 k.IsBaned = user.IsBaned;
                 k.LastName = user.LastName;
                 k.Password = user.Password;
@@ -201,7 +181,7 @@ namespace ReChat
         public static bool DeleteUser(User user)
         {
 
-            using (var entity = new Entities())
+            using (var entity = new ChatContext())
             {
                 User k = entity.Users.First(u => u.Id == user.Id);
                 if (k != null)

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Security.Principal;
+using ReChat.Models;
 
 namespace ReChat.Models
 {
@@ -19,54 +19,61 @@ namespace ReChat.Models
         }
 
 
-        public static List<ServerMessage> GetLastNewServerMessages(int idLastMessage, IPrincipal user)
+        public static List<ServerMessage> GetLastNewServerMessages(int idLastMessage, User user)
         {
-            if (idLastMessage < -1 || idLastMessage>=messages.Count-1 || AmountLastMessages<=0) return null;
-            
-
-            int count = messages.Count;
-            int startID = 0;
-
-            if (count - idLastMessage > AmountLastMessages)
-                startID = count - AmountLastMessages;
-            else
-                startID = idLastMessage + 1;
-
+            if (idLastMessage < -1 || idLastMessage>=messages.Count || AmountLastMessages<=0) return null;
 
             List<ServerMessage> SMessages = new List<ServerMessage>();
 
-            for (int i = startID; i < count; i++)
+            lock (messages)
             {
-                ServerMessage sm = new ServerMessage();
-                sm.DT = messages[i].DT;
-                sm.Id = messages[i].Id;
-                sm.Name = messages[i].User.Login;
-                sm.Text = messages[i].Text;
+                int count = messages.Count;
+                int startID = 0;
 
-                SMessages.Add(sm);
+                if (count - idLastMessage > AmountLastMessages)
+                    startID = count - AmountLastMessages;
+                else
+                    startID = idLastMessage+1;
+                
+                for (int i = startID; i < count; i++)
+                {
+                    ServerMessage sm = new ServerMessage
+                    {
+                        DT = messages[i].DT,
+                        Id = messages[i].Id,
+                        Name = messages[i].User.Login,
+                        Text = messages[i].Text + " ("+messages[i].Id.ToString()+")"
+                    };
+
+                    SMessages.Add(sm);
+                }
+
             }
 
             return SMessages;
         }
 
-        public static void AddClientMessage(ClientMessage msg, IPrincipal user)
+        public static void AddClientMessage(ClientMessage msg, User user)
         {
-            if (msg.Token == null || msg.Token == "") return;
+            if (string.IsNullOrEmpty(msg.Token)) return;
 
-            if (user != null)
+            if (user == null) return;
+
+            Message ms = new Message
             {
-                Message ms = new Message();
-                ms.DT = msg.DT;
-                ms.Text = msg.Text;
-                ms.User = (User)user;
-                ms.Id = 0;
+                DT = msg.DT,
+                Text = msg.Text,
+                User = user,
+                Id = 0
+            };
+
+            lock (messages)
+            {
                 messages.Add(ms);
                 messages[messages.Count - 1].Id = messages.Count - 1;
-
-                DBase.AddToLog(messages[messages.Count - 1]);
-                if(messages.Count % SaveToDBCount == 0)
-                    DBase.SaveLogsToDB();
             }
+
+            DBase.AddToLog(ms);
         }
 
     }

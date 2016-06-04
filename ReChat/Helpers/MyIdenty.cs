@@ -1,10 +1,11 @@
 ﻿using System.Security.Principal;
+using ReChat.Models;
 
 namespace ReChat.Helpers
 {
     public class MyIdenty : IIdentity
     {
-        private ReChat.User user;
+        private User user;
         public string AuthenticationType
         {
             get
@@ -35,7 +36,7 @@ namespace ReChat.Helpers
             }
         }
 
-        public MyIdenty(ReChat.User user)
+        public MyIdenty(User user)
         {
             this.user = user;
         }

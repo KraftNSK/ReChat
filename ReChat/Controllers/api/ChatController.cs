@@ -11,16 +11,16 @@ namespace ReChat.Controllers
     {
 
         //Используем для опроса сервера о новых сообщениях
-        public HttpResponseMessage POST(RequestNewMsg message)
+        public HttpResponseMessage Post(RequestNewMsg message)
         {
             if (message.LastMessageID < -1)
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
 
 
-            User = DBase.GetUserByToken(message.Token);
+            User user = DBase.GetUserByToken(message.Token);
 
-            if (User != null)
-                return Request.CreateResponse<List<ServerMessage>>(HttpStatusCode.OK, Chat.GetLastNewServerMessages(message.LastMessageID, User));
+            if (user != null)
+                return Request.CreateResponse<List<ServerMessage>>(HttpStatusCode.OK, Chat.GetLastNewServerMessages(message.LastMessageID, user));
             else
                 return new HttpResponseMessage(HttpStatusCode.Unauthorized);
         }
@@ -36,11 +36,12 @@ namespace ReChat.Controllers
             if (message.Text == null)
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
 
-            User = DBase.GetUserByToken(message.Token);
-            if (User != null)
+            User user = DBase.GetUserByToken(message.Token);
+            if (user != null)
             {
-                Chat.AddClientMessage(message, User);
-                return Request.CreateResponse<List<ServerMessage>>(HttpStatusCode.OK, Chat.GetLastNewServerMessages(message.LastMessageID, User));
+                Chat.AddClientMessage(message, user);
+                return Request.CreateResponse<List<ServerMessage>>(HttpStatusCode.OK, Chat.GetLastNewServerMessages(message.LastMessageID, user));
+                return Request.CreateResponse(HttpStatusCode.Created);
             }
             else
                 return new HttpResponseMessage(HttpStatusCode.Unauthorized);

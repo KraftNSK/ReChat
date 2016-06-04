@@ -23,7 +23,8 @@ namespace ReChat.Controllers
             if (msg.Login == "" || msg.Password == "")
                 err.Add(new ResponseError() { Key = "password", Text = "Пустые логины и пароли недопустимы!" });
 
-            ReChat.User u = DBase.GetUser(msg.Login, Security.getMd5Hash(msg.Password));
+            //User u = DBase.GetUser(msg.Login, Security.getMd5Hash(msg.Password));
+            User u = DBase.GetUser(msg.Login, msg.Password);
 
             if (u == null)
                 err.Add(new ResponseError() { Key = "login", Text = "Ошибка авторизации!" });
@@ -35,15 +36,13 @@ namespace ReChat.Controllers
             tm.Token = u.Token;
             tm.Login = u.Login;
 
-            User = u;
+            //ClientMessage m = new ClientMessage();
+            //m.DT = DateTime.Now;
+            //m.LastMessageID = -1;
+            //m.Text = "В чат вошел " + u.Login + "...";
+            //m.Token = u.Token;
 
-            ClientMessage m = new ClientMessage();
-            m.DT = DateTime.Now;
-            m.LastMessageID = -1;
-            m.Text = "В чат вошел " + u.Login + "...";
-            m.Token = u.Token;
-
-            Chat.AddClientMessage(m, User);
+            //Chat.AddClientMessage(m, u);
 
             return Request.CreateResponse<TokenMessage>(HttpStatusCode.OK, tm);
         }
@@ -63,7 +62,7 @@ namespace ReChat.Controllers
             if (msg.Login == "" || msg.Password == "")
                 err.Add(new ResponseError() { Key = "empty", Text = "Пустые логины и пароли недопустимы!" }); 
 
-            ReChat.User u = DBase.GetUser(msg.Login, Security.getMd5Hash(msg.Password));
+            User u = DBase.GetUser(msg.Login, Security.getMd5Hash(msg.Password));
 
             if (u == null)
                 err.Add(new ResponseError() { Key = "Error", Text = "Ошибка авторизации!" }); 

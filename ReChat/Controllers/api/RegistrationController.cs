@@ -59,20 +59,22 @@ namespace ReChat.Controllers
             if(err.Count > 0)
                 return Request.CreateResponse<List<ResponseError>>(HttpStatusCode.BadRequest, err);
 
-            ReChat.User user = new ReChat.User();
+            User user = new User();
             user.Login = msg.Login;
-            user.FirstName = msg.FirstName != null ? msg.FirstName : "";
-            user.LastName = msg.LastName != null ? msg.LastName : "";
+            user.FirstName = msg.FirstName ?? "";
+            user.LastName = msg.LastName ?? "";
             user.Email = msg.Email;
             user.RegDate = DateTime.Now; 
             user.Cookies = Guid.NewGuid().ToString(); 
             user.IsBaned = false;
             user.Token = Security.GetToken();
-            user.Password = Security.getMd5Hash(msg.Password);
+
+            user.Password = msg.Password;
+            //user.Password = Security.getMd5Hash(msg.Password);
 
             try
             {
-                user.idRole = (new Entities()).Roles.First(r => r.RoleName == "user").Id;
+                user.Role = (new ChatContext()).Roles.First(r => r.RoleName == "users");
                 DBase.AddUser(user);
             }
             catch

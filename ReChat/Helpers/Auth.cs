@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Web;
+using ReChat.Models;
 
 namespace ReChat.Helpers
 {
