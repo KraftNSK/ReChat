@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using ReChat.Models;
 
 namespace ReChat.Models
@@ -11,8 +12,6 @@ namespace ReChat.Models
         //Количество последних загружаемых сообщений из чата при подключении
         public static int AmountLastMessages { get; set; } = 15;
 
-        //После каждых SaveToDBCount сообщений, будет происходить сохранение их в БД
-        public static int SaveToDBCount { get; set; } = 3;
         static Chat()
         {
             messages = new List<Message>();
@@ -42,7 +41,7 @@ namespace ReChat.Models
                         DT = messages[i].DT,
                         Id = messages[i].Id,
                         Name = messages[i].User.Login,
-                        Text = messages[i].Text + " ("+messages[i].Id.ToString()+")"
+                        Text = messages[i].Text
                     };
 
                     SMessages.Add(sm);
@@ -73,7 +72,7 @@ namespace ReChat.Models
                 messages[messages.Count - 1].Id = messages.Count - 1;
             }
 
-            DBase.AddToLog(ms);
+            DBase.AddToLogAsync(ms);
         }
 
     }

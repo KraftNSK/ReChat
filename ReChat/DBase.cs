@@ -2,20 +2,23 @@
 using ReChat.Models;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Entity;
+using System.Threading.Tasks;
 
 namespace ReChat
 {
     public static class DBase
     {
-        private static ChatContext eLog = new ChatContext();
-
         private static object _sync = new object();
+
+        private static ChatContext eLog;
 
         //Кэшируем пользователей
         private static ConcurrentDictionary<string, User> users = new ConcurrentDictionary<string, User>();
 
         private static List<Log> logs = new List<Log>();
         private static int logCount = 0;
+        private static readonly int MaxCache = 50;
 
         static DBase()
         {
@@ -26,25 +29,35 @@ namespace ReChat
         /// Добавление сообщения чата в очередь на запись в БД
         /// </summary>
         /// <param name="msg"></param>
-        public static void AddToLog(Message msg)
+        public static async Task AddToLogAsync(Message msg)
         {
             lock (_sync)
             {
                 logs.Add(new Log
                 {
-                    User = msg.User,
                     Text = msg.Text,
-                    DT = msg.DT
+                    DT = msg.DT,
+                    UserId = msg.User.Id
+                    
                 });
                 logCount++;
+
+                if (logCount == MaxCache)
+                {
+                    eLog = new ChatContext();
+                    eLog.Logs.AddRange(logs);
+                    logs.Clear();
+                }
             }
 
-            if (logCount%100 == 0)
-                lock (_sync)
-                {
-                    eLog.Logs.AddRange(logs);
-                    eLog.SaveChanges();
-                }
+            if (logCount == MaxCache)
+            {
+                logCount = 0;
+                eLog.SaveChangesAsync();
+            }
+
+
+
         }
 
         /// <summary>
@@ -89,7 +102,7 @@ namespace ReChat
             {
                 try
                 {
-                    User k = entity.Users.First(u => u.Login == login && u.Password == password);
+                    User k = entity.Users.Include(c => c.Role).First(u => u.Login == login && u.Password == password);
                     return k;
                 }
                 catch
@@ -124,7 +137,7 @@ namespace ReChat
             {
                 try
                 {
-                    User k = entity.Users.First(u => u.Token == token);
+                    User k = entity.Users.Include(c => c.Role).First(u => u.Token == token);
 
                     users.TryAdd(token, k);
 

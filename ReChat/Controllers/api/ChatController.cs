@@ -41,7 +41,6 @@ namespace ReChat.Controllers
             {
                 Chat.AddClientMessage(message, user);
                 return Request.CreateResponse<List<ServerMessage>>(HttpStatusCode.OK, Chat.GetLastNewServerMessages(message.LastMessageID, user));
-                return Request.CreateResponse(HttpStatusCode.Created);
             }
             else
                 return new HttpResponseMessage(HttpStatusCode.Unauthorized);

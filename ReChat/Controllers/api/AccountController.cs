@@ -36,13 +36,13 @@ namespace ReChat.Controllers
             tm.Token = u.Token;
             tm.Login = u.Login;
 
-            //ClientMessage m = new ClientMessage();
-            //m.DT = DateTime.Now;
-            //m.LastMessageID = -1;
-            //m.Text = "В чат вошел " + u.Login + "...";
-            //m.Token = u.Token;
+            ClientMessage m = new ClientMessage();
+            m.DT = DateTime.Now;
+            m.LastMessageID = -1;
+            m.Text = "В чат вошел " + u.Login + "...";
+            m.Token = u.Token;
 
-            //Chat.AddClientMessage(m, u);
+            Chat.AddClientMessage(m, u);
 
             return Request.CreateResponse<TokenMessage>(HttpStatusCode.OK, tm);
         }

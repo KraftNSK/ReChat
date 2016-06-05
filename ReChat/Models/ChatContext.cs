@@ -10,7 +10,8 @@ namespace ReChat.Models
 {
     public class ChatContext: DbContext
     {
-        public ChatContext(): base("Server=(localdb)\\mssqllocaldb;Database=ReChat;Trusted_Connection=True;MultipleActiveResultSets=true")
+        public ChatContext(): base("Data Source = admin; Database=ReChat; Integrated Security = True; ApplicationIntent=ReadWrite;MultiSubnetFailover=False")
+  //          "Server=(localdb)\\mssqllocaldb;Database=ReChat;Trusted_Connection=True;MultipleActiveResultSets=true")
         {
             Database.SetInitializer(new CreateDatabaseIfNotExists<ChatContext>());
             Database.SetInitializer(new DropCreateDatabaseIfModelChanges<ChatContext>());

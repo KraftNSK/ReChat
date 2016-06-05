@@ -83,7 +83,7 @@ function FormatDate(date) {
 //Запрос новых сообщений с сервера
 function GetMessages() {
     var d = {
-        LastMessageID: LastMessageID,
+        LastMessageID: window.LastMessageID,
         token: sessionStorage.getItem(tokenKey)
     };
     $.ajax({
@@ -95,7 +95,7 @@ function GetMessages() {
             var messages = $.map(data, function (msg) {
                 var m = new MsgServer(msg);
                 m.dt = FormatDate(m.dt);
-                LastMessageID = msg.id;
+                if (window.LastMessageID < msg.id) window.LastMessageID = msg.id;
                 return m;
             });
             AddElements(messages);
@@ -133,9 +133,9 @@ function ChatViewModel() {
             if ($("#myMessage").val() == '') return;
             value = {
                 Token: sessionStorage.getItem(tokenKey),
-                text: context.myMessage(),
+                text: $("#myMessage").val(),
                 dt: context.myDT(),
-                LastMessageID: LastMessageID,
+                LastMessageID: window.LastMessageID,
             };
 
 
@@ -148,7 +148,7 @@ function ChatViewModel() {
                     var messages = $.map(data, function (msg) {
                         var m = new MsgServer(msg);
                         m.dt = FormatDate(m.dt);
-                        if(LastMessageID<msg.id) LastMessageID = msg.id;
+                        if(window.LastMessageID<msg.id) window.LastMessageID = msg.id;
                         return m;
                     });
                     AddElements(messages);
@@ -171,13 +171,8 @@ function ChatViewModel() {
 //Обработка нажатия Enter инпута чата
 $("#myMessage").keydown(function (event) {
     if (event.keyCode == 13) {
-        $("#btnSend").click();
+       $("#btnSend").click();
     }
-});
-
-//Возврат фокуса инпуту чата
-$("#btnSend").click(function (event) {
-    $("#myMessage").focus();
 });
 
 //Нажата конопка отправки регистрационных данных
@@ -340,7 +335,7 @@ $("#btnExit").on('click', function () {
         dt: function () {
             return new Date().toJSON()
         },
-        LastMessageID: LastMessageID,
+        LastMessageID: window.LastMessageID
     };
 
     $.ajax({
@@ -355,7 +350,7 @@ $("#btnExit").on('click', function () {
     isAuth = false;
     sessionStorage.clear();
     MyLogin = '';
-    LastMessageID = -1;
+    window.LastMessageID = -1;
 });
 
 //Для авторизации по куки
